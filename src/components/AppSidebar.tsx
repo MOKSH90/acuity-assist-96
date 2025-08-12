@@ -11,6 +11,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -32,12 +33,6 @@ const menuItems = [
     group: "Overview"
   },
   {
-    title: "Patient Queue",
-    url: "/patients/queue",
-    icon: Clock,
-    group: "Patients"
-  },
-  {
     title: "Add Patient",
     url: "/patients/new",
     icon: UserPlus,
@@ -54,6 +49,13 @@ const menuItems = [
     url: "/beds",
     icon: Bed,
     group: "Resources"
+  },
+  {
+    title: "Staff Management",
+    url: "/staff",
+    icon: Users,
+    group: "Admin",
+    adminOnly: true
   },
   {
     title: "Doctor Feedback",
@@ -86,6 +88,21 @@ export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
+  const { hasRole } = useAuth();
+
+  // Filter menu items based on user role
+  const filteredGroupedItems = Object.entries(groupedItems).reduce((acc, [groupName, items]) => {
+    const filteredItems = items.filter(item => {
+      if (item.adminOnly) {
+        return hasRole('admin');
+      }
+      return true;
+    });
+    if (filteredItems.length > 0) {
+      acc[groupName] = filteredItems;
+    }
+    return acc;
+  }, {} as Record<string, typeof menuItems>);
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -111,7 +128,7 @@ export function AppSidebar() {
       </div>
 
       <SidebarContent className="px-2">
-        {Object.entries(groupedItems).map(([groupName, items]) => (
+        {Object.entries(filteredGroupedItems).map(([groupName, items]) => (
           <SidebarGroup key={groupName}>
             {!isCollapsed && (
               <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground px-2 py-2">

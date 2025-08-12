@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, AlertTriangle, Activity, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { apiService } from "@/services/api";
 
 // Symptom scoring system
 const symptoms = [
@@ -102,18 +103,37 @@ const AddPatient = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [backendResponse, setBackendResponse] = useState<any>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const score = calculateSeverityScore();
-    const severity = getSeverityCategory(score);
+    setIsSubmitting(true);
     
-    // Here you would typically save to database
-    toast({
-      title: "Patient Added Successfully",
-      description: `${patientData.firstName} ${patientData.lastName} has been added to the ${severity.category.toLowerCase()} queue with a severity score of ${score}.`,
-    });
-    
-    navigate('/patients/queue');
+    try {
+      // Submit to backend API
+      const response = await apiService.submitPatient(patientData);
+      setBackendResponse(response);
+      
+      toast({
+        title: "Patient Submitted Successfully",
+        description: `${patientData.firstName} ${patientData.lastName} has been processed. Backend severity score: ${response.severityScore}`,
+      });
+      
+      // Navigate after 3 seconds to show the response
+      setTimeout(() => {
+        navigate('/patients');
+      }, 3000);
+      
+    } catch (error) {
+      toast({
+        title: "Submission Failed",
+        description: "Failed to submit patient data to backend. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const severityScore = calculateSeverityScore();
@@ -368,17 +388,45 @@ const AddPatient = () => {
                 <CardDescription>Real-time triage scoring</CardDescription>
               </CardHeader>
               <CardContent className="text-center space-y-4">
-                <div className="space-y-2">
-                  <div className={`text-6xl font-bold text-${severity.color}`}>
-                    {severityScore}
+                {backendResponse ? (
+                  <div className="space-y-4 p-4 bg-accent/30 rounded-lg">
+                    <div className="text-sm font-medium text-foreground">Backend Response:</div>
+                    <div className="space-y-2">
+                      <div className={`text-6xl font-bold text-${severity.color}`}>
+                        {backendResponse.severityScore}
+                      </div>
+                      <Badge 
+                        variant={backendResponse.priority === 'Critical' ? 'destructive' : 'secondary'}
+                        className="text-lg px-4 py-1"
+                      >
+                        {backendResponse.priority}
+                      </Badge>
+                      <div className="text-sm text-muted-foreground">
+                        Patient ID: {backendResponse.id}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Wait Time: {backendResponse.estimatedWaitTime}
+                      </div>
+                      {backendResponse.triageNotes && (
+                        <div className="text-xs text-muted-foreground mt-2">
+                          {backendResponse.triageNotes}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <Badge 
-                    variant={severity.color === 'critical' ? 'destructive' : 'secondary'}
-                    className={`text-lg px-4 py-1 ${severity.color === 'urgent' ? 'bg-urgent text-urgent-foreground' : severity.color === 'non-urgent' ? 'bg-non-urgent text-non-urgent-foreground' : ''}`}
-                  >
-                    {severity.category}
-                  </Badge>
-                </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className={`text-6xl font-bold text-${severity.color}`}>
+                      {severityScore}
+                    </div>
+                    <Badge 
+                      variant={severity.color === 'critical' ? 'destructive' : 'secondary'}
+                      className={`text-lg px-4 py-1 ${severity.color === 'urgent' ? 'bg-urgent text-urgent-foreground' : severity.color === 'non-urgent' ? 'bg-non-urgent text-non-urgent-foreground' : ''}`}
+                    >
+                      {severity.category}
+                    </Badge>
+                  </div>
+                )}
 
                 {hasCriticalSymptoms && (
                   <div className="p-3 bg-critical/10 text-critical rounded-lg border border-critical/20">
@@ -407,13 +455,14 @@ const AddPatient = () => {
               </CardContent>
             </Card>
 
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-primary hover:opacity-90 transition-smooth"
-              disabled={!patientData.firstName || !patientData.lastName || !patientData.chiefComplaint}
-            >
-              Add to Triage Queue
-            </Button>
+            <div className="flex justify-end space-x-3 pt-6">
+              <Button type="button" variant="outline" onClick={() => navigate(-1)} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-gradient-primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : 'Submit to Backend'}
+              </Button>
+            </div>
           </div>
         </div>
       </form>

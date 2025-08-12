@@ -5,7 +5,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { LandingPage, LoginPage } from "@/components/LandingPage";
+import { LoginPage } from "@/components/LandingPage";
+import { AuthProvider, useAuth } from "@/components/AuthContext";
+import StaffManagement from "./pages/StaffManagement";
+import AllPatients from "./pages/AllPatients";
+import BedManagement from "./pages/BedManagement";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Dashboard } from "@/components/Dashboard";
 import AddPatient from "./pages/AddPatient";
@@ -14,19 +18,11 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+const AuthenticatedApp = () => {
+  const { user } = useAuth();
 
-  if (!isAuthenticated) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <LoginPage onLogin={() => setIsAuthenticated(true)} />
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
+  if (!user) {
+    return <LoginPage onLogin={() => {}} />;
   }
 
   return (
@@ -51,10 +47,10 @@ const App = () => {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/patients/new" element={<AddPatient />} />
-                    <Route path="/patients/queue" element={<PatientQueue />} />
+                    <Route path="/patients" element={<AllPatients />} />
                     <Route path="/patients/:id" element={<div className="p-6"><h1>Patient Details (Coming Soon)</h1></div>} />
-                    <Route path="/patients" element={<div className="p-6"><h1>All Patients (Coming Soon)</h1></div>} />
-                    <Route path="/beds" element={<div className="p-6"><h1>Bed Management (Coming Soon)</h1></div>} />
+                    <Route path="/beds" element={<BedManagement />} />
+                    <Route path="/staff" element={<StaffManagement />} />
                     <Route path="/feedback" element={<div className="p-6"><h1>Doctor Feedback (Coming Soon)</h1></div>} />
                     <Route path="/model" element={<div className="p-6"><h1>Analytics (Coming Soon)</h1></div>} />
                     <Route path="/settings" element={<div className="p-6"><h1>Settings (Coming Soon)</h1></div>} />
@@ -65,6 +61,20 @@ const App = () => {
             </div>
           </SidebarProvider>
         </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <AuthenticatedApp />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
