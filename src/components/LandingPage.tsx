@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface LoginPageProps {
-  onLogin: () => void;
+  onLogin: (email: string, password: string) => void;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
@@ -20,8 +20,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    onLogin();
+    onLogin(email, password);
   };
 
   return (

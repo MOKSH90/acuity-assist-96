@@ -19,11 +19,21 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
 
-  if (!user) {
-    return <LoginPage onLogin={() => {}} />;
-  }
+ if (!user) {
+   return (
+     <LoginPage
+       onLogin={async (email: string, password: string) => {
+         const success = await login(email, password);
+         if (!success) {
+           console.error("Login failed");
+         }
+       }}
+     />
+   );
+ }
+
 
   return (
     <QueryClientProvider client={queryClient}>

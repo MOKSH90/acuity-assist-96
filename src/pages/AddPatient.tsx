@@ -40,7 +40,6 @@ const AddPatient = () => {
     lastName: "",
     age: "",
     gender: "",
-    phone: "",
     emergencyContact: "",
     chiefComplaint: "",
     selectedSymptoms: [] as string[],

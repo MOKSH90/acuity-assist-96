@@ -29,16 +29,15 @@ export interface PatientResponse {
 
 export interface StaffMember {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: 'admin' | 'doctor' | 'nurse';
-  department: string;
-  phone: string;
-  status: 'active' | 'inactive';
+  name: string;
+  username: string; // ✅ Add this
+  role: "admin" | "doctor" | "nurse";
+  status: "active" | "inactive";
   createdAt: string;
   lastLogin?: string;
+  password?: string; // Only used when creating new staff
 }
+
 
 export interface Bed {
   id: string;
@@ -53,31 +52,33 @@ export interface Bed {
 }
 
 class ApiService {
-  private baseUrl = 'https://api.hospital-system.com'; // Dummy endpoint
+  private baseUrl = "https://hackathon-backend-980w.onrender.com"; // Dummy endpoint
 
   // Simulate network delay
   private async simulateDelay(ms: number = 1000) {
-    await new Promise(resolve => setTimeout(resolve, ms));
+    await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // Patient API
-  async submitPatient(patientData: PatientSubmissionData): Promise<PatientResponse> {
+  async submitPatient(
+    patientData: PatientSubmissionData
+  ): Promise<PatientResponse> {
     await this.simulateDelay(1500);
-    
+
     // Mock severity calculation from backend
     const mockSeverityScore = Math.floor(Math.random() * 100) + 20;
-    let priority: 'Critical' | 'Urgent' | 'Non-Urgent';
+    let priority: "Critical" | "Urgent" | "Non-Urgent";
     let estimatedWaitTime: string;
-    
+
     if (mockSeverityScore >= 70) {
-      priority = 'Critical';
-      estimatedWaitTime = 'Immediate';
+      priority = "Critical";
+      estimatedWaitTime = "Immediate";
     } else if (mockSeverityScore >= 40) {
-      priority = 'Urgent';
-      estimatedWaitTime = '< 30 minutes';
+      priority = "Urgent";
+      estimatedWaitTime = "< 30 minutes";
     } else {
-      priority = 'Non-Urgent';
-      estimatedWaitTime = '< 2 hours';
+      priority = "Non-Urgent";
+      estimatedWaitTime = "< 2 hours";
     }
 
     return {
@@ -85,72 +86,74 @@ class ApiService {
       severityScore: mockSeverityScore,
       priority,
       estimatedWaitTime,
-      triageNotes: 'Automated triage assessment completed successfully.'
+      triageNotes: "Automated triage assessment completed successfully.",
     };
   }
 
   // Staff Management API
+  // Staff Management API
   async getStaff(): Promise<StaffMember[]> {
-    await this.simulateDelay();
-    
-    // Mock staff data
-    return [
-      {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@hospital.com',
-        role: 'doctor',
-        department: 'Emergency',
-        phone: '+1 (555) 123-4567',
-        status: 'active',
-        createdAt: '2024-01-15T10:30:00Z',
-        lastLogin: '2024-01-20T14:22:00Z'
-      },
-      {
-        id: '2',
-        firstName: 'Sarah',
-        lastName: 'Johnson',
-        email: 'sarah.johnson@hospital.com',
-        role: 'nurse',
-        department: 'Emergency',
-        phone: '+1 (555) 234-5678',
-        status: 'active',
-        createdAt: '2024-01-10T09:15:00Z',
-        lastLogin: '2024-01-20T13:45:00Z'
-      },
-      {
-        id: '3',
-        firstName: 'Michael',
-        lastName: 'Chen',
-        email: 'michael.chen@hospital.com',
-        role: 'admin',
-        department: 'Administration',
-        phone: '+1 (555) 345-6789',
-        status: 'active',
-        createdAt: '2024-01-05T08:00:00Z',
-        lastLogin: '2024-01-20T15:10:00Z'
-      }
-    ];
+    const response = await fetch(`${this.baseUrl}/auth/users`);
+    if (!response.ok) throw new Error(`Failed to fetch staff`);
+
+    const data = await response.json();
+    console.log("Fetched staff data:", data);
+    if (!data.users || !Array.isArray(data.users))
+      throw new Error("Invalid API response");
+
+    return data.users.map((user: any) => ({
+      id: user._id,
+      name: user.name || "",
+      username: user.username || "", // Ensure username is always present
+      role: user.role,
+      createdAt: new Date().toISOString(),
+      // lastLogin: undefined,
+    })) as StaffMember[];
   }
 
-  async createStaffMember(staffData: Omit<StaffMember, 'id' | 'createdAt'>): Promise<StaffMember> {
-    await this.simulateDelay();
-    
+  async createStaffMember(
+    staffData: Omit<StaffMember, "id" | "createdAt">
+  ): Promise<StaffMember> {
+    const payload = {
+      password: staffData.password || "defaultPass123",
+      name: staffData.name,
+      role: staffData.role,
+      username: staffData.username, // ✅ Now guaranteed to exist
+    };
+
+    console.log("Creating staff member with payload:", payload);
+
+    const response = await fetch(`${this.baseUrl}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    console.log("Create staff response status:", response);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Failed to create staff member");
+    }
+
+    const result = await response.json();
     return {
       ...staffData,
-      id: `staff_${Date.now()}`,
-      createdAt: new Date().toISOString()
+      id: result.user || `staff_${Date.now()}`,
+      createdAt: new Date().toISOString(),
     };
   }
 
-  async updateStaffMember(id: string, staffData: Partial<StaffMember>): Promise<StaffMember> {
+  async updateStaffMember(
+    id: string,
+    staffData: Partial<StaffMember>
+  ): Promise<StaffMember> {
     await this.simulateDelay();
-    
+
     const staff = await this.getStaff();
-    const existing = staff.find(s => s.id === id);
-    if (!existing) throw new Error('Staff member not found');
-    
+    const existing = staff.find((s) => s.id === id);
+    if (!existing) throw new Error("Staff member not found");
+
     return { ...existing, ...staffData };
   }
 
@@ -162,68 +165,72 @@ class ApiService {
   // Bed Management API
   async getBeds(): Promise<Bed[]> {
     await this.simulateDelay();
-    
+
     return [
       {
-        id: '1',
-        number: 'ER-001',
-        type: 'emergency',
-        status: 'occupied',
-        patientId: 'patient_123',
-        patientName: 'Sarah Johnson',
-        assignedAt: '2024-01-20T10:30:00Z',
-        estimatedDischarge: '2024-01-20T18:00:00Z',
-        location: 'Emergency Ward - Room 1'
+        id: "1",
+        number: "ER-001",
+        type: "emergency",
+        status: "occupied",
+        patientId: "patient_123",
+        patientName: "Sarah Johnson",
+        assignedAt: "2024-01-20T10:30:00Z",
+        estimatedDischarge: "2024-01-20T18:00:00Z",
+        location: "Emergency Ward - Room 1",
       },
       {
-        id: '2',
-        number: 'ER-002',
-        type: 'emergency',
-        status: 'available',
-        location: 'Emergency Ward - Room 2'
+        id: "2",
+        number: "ER-002",
+        type: "emergency",
+        status: "available",
+        location: "Emergency Ward - Room 2",
       },
       {
-        id: '3',
-        number: 'ICU-001',
-        type: 'icu',
-        status: 'occupied',
-        patientId: 'patient_456',
-        patientName: 'Michael Chen',
-        assignedAt: '2024-01-19T14:15:00Z',
-        location: 'ICU - Room 1'
+        id: "3",
+        number: "ICU-001",
+        type: "icu",
+        status: "occupied",
+        patientId: "patient_456",
+        patientName: "Michael Chen",
+        assignedAt: "2024-01-19T14:15:00Z",
+        location: "ICU - Room 1",
       },
       {
-        id: '4',
-        number: 'ICU-002',
-        type: 'icu',
-        status: 'maintenance',
-        location: 'ICU - Room 2'
+        id: "4",
+        number: "ICU-002",
+        type: "icu",
+        status: "maintenance",
+        location: "ICU - Room 2",
       },
       {
-        id: '5',
-        number: 'GEN-001',
-        type: 'general',
-        status: 'available',
-        location: 'General Ward - Room 1'
-      }
+        id: "5",
+        number: "GEN-001",
+        type: "general",
+        status: "available",
+        location: "General Ward - Room 1",
+      },
     ];
   }
 
-  async updateBedStatus(id: string, status: Bed['status'], patientData?: { patientId: string; patientName: string }): Promise<Bed> {
+  async updateBedStatus(
+    id: string,
+    status: Bed["status"],
+    patientData?: { patientId: string; patientName: string }
+  ): Promise<Bed> {
     await this.simulateDelay();
-    
+
     const beds = await this.getBeds();
-    const bed = beds.find(b => b.id === id);
-    if (!bed) throw new Error('Bed not found');
-    
+    const bed = beds.find((b) => b.id === id);
+    if (!bed) throw new Error("Bed not found");
+
     return {
       ...bed,
       status,
       ...(patientData && {
         patientId: patientData.patientId,
         patientName: patientData.patientName,
-        assignedAt: new Date().toISOString()
-      })
+        assignedAt: new Date().toISOString(),
+      }),
     };
   }
 }

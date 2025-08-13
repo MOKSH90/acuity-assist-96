@@ -22,15 +22,12 @@ const StaffManagement = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    role: "nurse" as StaffMember['role'],
-    department: "",
-    phone: "",
-    status: "active" as StaffMember['status']
-  });
+const [formData, setFormData] = useState({
+  name: "",
+  username: "", // ✅ Add
+  role: "nurse" as StaffMember["role"],
+  password: "", // ✅ Add so it's tracked for new users
+});
 
   // Check if user has admin access
   if (!hasRole('admin')) {
@@ -113,40 +110,32 @@ const StaffManagement = () => {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      role: "nurse",
-      department: "",
-      phone: "",
-      status: "active"
-    });
-    setEditingStaff(null);
-    setIsAddDialogOpen(false);
-  };
+const resetForm = () => {
+  setFormData({
+    name: "",
+    username: "",
+    role: "nurse",
+    password: "",
+  });
+  setEditingStaff(null);
+  setIsAddDialogOpen(false);
+};
 
-  const startEdit = (staffMember: StaffMember) => {
-    setFormData({
-      firstName: staffMember.firstName,
-      lastName: staffMember.lastName,
-      email: staffMember.email,
-      role: staffMember.role,
-      department: staffMember.department,
-      phone: staffMember.phone,
-      status: staffMember.status
-    });
-    setEditingStaff(staffMember);
-    setIsAddDialogOpen(true);
-  };
+
+const startEdit = (staffMember: StaffMember) => {
+  setFormData({
+    name: staffMember.name,
+    username: staffMember.username, // ✅ Include username
+    role: staffMember.role,
+    password: "",
+  });
+  setEditingStaff(staffMember);
+  setIsAddDialogOpen(true);
+};
 
   const filteredStaff = staff.filter(member => {
-    const matchesSearch = 
-      member.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      member.name.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRole = filterRole === "all" || member.role === filterRole;
     
@@ -182,8 +171,12 @@ const StaffManagement = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Staff Management</h1>
-          <p className="text-muted-foreground mt-1">Manage hospital staff and roles</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            Staff Management
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage hospital staff and roles
+          </p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
@@ -195,49 +188,72 @@ const StaffManagement = () => {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
-                {editingStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
+                {editingStaff ? "Edit Staff Member" : "Add New Staff Member"}
               </DialogTitle>
               <DialogDescription>
-                {editingStaff ? 'Update staff member information' : 'Add a new staff member to the system'}
+                {editingStaff
+                  ? "Update staff member information"
+                  : "Add a new staff member to the system"}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="name">Name</Label>
                   <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData(prev => ({...prev, firstName: e.target.value}))}
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    }
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData(prev => ({...prev, lastName: e.target.value}))}
+                    id="username"
+                    value={formData.username}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        username: e.target.value,
+                      }))
+                    }
                     required
                   />
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))}
-                  required
-                />
-              </div>
 
+                {!editingStaff && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password || ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({...prev, role: value as StaffMember['role']}))}>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        role: value as StaffMember["role"],
+                      }))
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -248,48 +264,14 @@ const StaffManagement = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    value={formData.department}
-                    onChange={(e) => setFormData(prev => ({...prev, department: e.target.value}))}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({...prev, phone: e.target.value}))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({...prev, status: value as StaffMember['status']}))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              </div>   
 
               <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Cancel
                 </Button>
                 <Button type="submit">
-                  {editingStaff ? 'Update' : 'Add'} Staff Member
+                  {editingStaff ? "Update" : "Add"} Staff Member
                 </Button>
               </div>
             </form>
@@ -304,7 +286,9 @@ const StaffManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Staff</p>
-                <p className="text-2xl font-bold text-foreground">{staff.length}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {staff.length}
+                </p>
               </div>
               <Users className="h-5 w-5 text-primary" />
             </div>
@@ -315,7 +299,9 @@ const StaffManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Doctors</p>
-                <p className="text-2xl font-bold text-foreground">{staff.filter(s => s.role === 'doctor').length}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {staff.filter((s) => s.role === "doctor").length}
+                </p>
               </div>
               <Users className="h-5 w-5 text-primary" />
             </div>
@@ -326,7 +312,9 @@ const StaffManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Nurses</p>
-                <p className="text-2xl font-bold text-foreground">{staff.filter(s => s.role === 'nurse').length}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {staff.filter((s) => s.role === "nurse").length}
+                </p>
               </div>
               <Users className="h-5 w-5 text-primary" />
             </div>
@@ -337,7 +325,9 @@ const StaffManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold text-foreground">{staff.filter(s => s.status === 'active').length}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {staff.filter((s) => s.status === "active").length}
+                </p>
               </div>
               <Users className="h-5 w-5 text-primary" />
             </div>
@@ -353,7 +343,7 @@ const StaffManagement = () => {
               <div className="relative">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search staff by name, email, or department..."
+                  placeholder="Search staff by name"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -382,12 +372,17 @@ const StaffManagement = () => {
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle>Staff Members ({filteredStaff.length})</CardTitle>
-          <CardDescription>Manage hospital staff members and their roles</CardDescription>
+          <CardDescription>
+            Manage hospital staff members and their roles
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {filteredStaff.map((member) => (
-              <div key={member.id} className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/30 transition-smooth">
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/30 transition-smooth"
+              >
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
                     <Users className="h-5 w-5 text-primary" />
@@ -395,36 +390,32 @@ const StaffManagement = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
                       <h3 className="font-semibold text-foreground">
-                        {member.firstName} {member.lastName}
+                        {member.name}
                       </h3>
                       <Badge variant={getRoleBadgeVariant(member.role)}>
-                        {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                        {member.role.charAt(0).toUpperCase() +
+                          member.role.slice(1)}
                       </Badge>
                       <Badge variant={getStatusBadgeVariant(member.status)}>
-                        {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                        {member.status.charAt(0).toUpperCase() +
+                          member.status.slice(1)}
                       </Badge>
-                    </div>
-                    <div className="flex items-center space-x-4 mt-1 text-sm text-muted-foreground">
-                      <span className="flex items-center">
-                        <Mail className="h-3 w-3 mr-1" />
-                        {member.email}
-                      </span>
-                      <span className="flex items-center">
-                        <Phone className="h-3 w-3 mr-1" />
-                        {member.phone}
-                      </span>
-                      <span>{member.department}</span>
                     </div>
                     {member.lastLogin && (
                       <div className="flex items-center mt-1 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 mr-1" />
-                        Last login: {new Date(member.lastLogin).toLocaleDateString()}
+                        Last login:{" "}
+                        {new Date(member.lastLogin).toLocaleDateString()}
                       </div>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => startEdit(member)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => startEdit(member)}
+                  >
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </Button>
@@ -439,12 +430,15 @@ const StaffManagement = () => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Staff Member</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete {member.firstName} {member.lastName}? This action cannot be undone.
+                          Are you sure you want to delete {member.name}? This
+                          action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(member.id)}>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(member.id)}
+                        >
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>

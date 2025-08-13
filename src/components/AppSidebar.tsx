@@ -145,8 +145,8 @@ export function AppSidebar() {
                         className={getNavCls}
                         title={isCollapsed ? item.title : undefined}
                       >
-                        <item.icon className={`h-4 w-4 flex-shrink-0 ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
-                        {!isCollapsed && <span className="truncate">{item.title}</span>}
+                        <item.icon className={`h-4 w-4 text-gray-800 flex-shrink-0 ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
+                        {!isCollapsed && <span className="text-gray-800 truncate">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

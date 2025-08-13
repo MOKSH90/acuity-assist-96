@@ -23,7 +23,7 @@ const mockPatients = [
 ];
 
 const stats = [
-  { title: "Patients in Queue", value: "12", trend: "+3", icon: Users, color: "text-primary" },
+  { title: "Total Patients", value: "12", trend: "+3", icon: Users, color: "text-primary" },
   { title: "Avg Wait Time", value: "8m", trend: "-2m", icon: Clock, color: "text-urgent" },
   { title: "Available Beds", value: "6/24", trend: "-2", icon: Bed, color: "text-non-urgent" },
   { title: "Critical Cases", value: "3", trend: "+1", icon: AlertTriangle, color: "text-critical" }
@@ -55,7 +55,7 @@ export function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Emergency Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Monitor patient flow and triage status</p>
         </div>
         <Button 
@@ -77,9 +77,7 @@ export function Dashboard() {
                   <p className="text-sm text-muted-foreground font-medium">{stat.title}</p>
                   <div className="flex items-baseline space-x-2 mt-1">
                     <span className="text-2xl font-bold text-foreground">{stat.value}</span>
-                    <span className={`text-sm font-medium ${stat.trend.startsWith('+') ? 'text-critical' : 'text-non-urgent'}`}>
-                      {stat.trend}
-                    </span>
+                    
                   </div>
                 </div>
                 <div className={`p-3 rounded-lg bg-accent/20`}>
